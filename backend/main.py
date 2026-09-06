@@ -10,6 +10,11 @@ from .database import engine, Base, get_db
 from . import models, schemas
 from .ai import get_gpu_analysis_from_ai
 
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+import os
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
@@ -17,6 +22,10 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(title="FastConfig API", lifespan=lifespan)
+
+@app.get("/")
+async def read_index():
+    return FileResponse("frontend/index.html")
 
 app.add_middleware(
     CORSMiddleware,
