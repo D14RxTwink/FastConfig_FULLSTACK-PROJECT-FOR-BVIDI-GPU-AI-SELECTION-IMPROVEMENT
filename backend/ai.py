@@ -1,4 +1,5 @@
 import os
+import json
 from openai import AsyncOpenAI
 
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
@@ -34,7 +35,6 @@ async def get_gpu_analysis_from_ai(gpu_name: str, vram: int, bus: int, arch: str
                 response_format={"type": "json_object"}
             )
             
-            import json
             data = json.loads(response.choices[0].message.content)
             return {
                 "verdict": data.get("verdict", "Анализ завершен успешно."),
@@ -46,12 +46,10 @@ async def get_gpu_analysis_from_ai(gpu_name: str, vram: int, bus: int, arch: str
         except Exception as e:
             print(f"Ошибка DeepSeek API: {e}. Переходим на авто-расчет.")
 
-    # 2. Умный локальный расчет процентов (Локальный AI / Fallback)
-    
-    # Офис: любая современная карта справляется на 100%
+    # 2. Локальный расчет процентов (Fallback, если нет ключа или ошибки сети)
     office_score = 100
     
-    # Игры: расчет на основе объёма VRAM и шины
+    # Игры: зависит от VRAM
     if vram >= 16:
         games_score = 95
     elif vram >= 12:
@@ -63,7 +61,7 @@ async def get_gpu_analysis_from_ai(gpu_name: str, vram: int, bus: int, arch: str
     else:
         games_score = 30
 
-    # 3D Рендеринг: важны VRAM (от 12GB) и шина (от 192-bit)
+    # 3D Рендеринг: VRAM + шина
     if vram >= 16 and bus >= 256:
         render_score = 95
     elif vram >= 12:
@@ -73,7 +71,7 @@ async def get_gpu_analysis_from_ai(gpu_name: str, vram: int, bus: int, arch: str
     else:
         render_score = 35
 
-    # Machine Learning (ML): критически важен объем VRAM (PyTorch/CUDA)
+    # Machine Learning (ML): жесткий упор в VRAM (PyTorch/CUDA)
     if vram >= 24:
         ml_score = 98
     elif vram >= 16:
