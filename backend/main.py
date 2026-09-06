@@ -9,30 +9,20 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 
-from .database import engine, Base, get_db, seed_data
+from .database import engine, Base, get_db
 from . import models, schemas
 from .ai import get_gpu_analysis_from_ai
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # 1. Создаем таблицы в базе данных
+    # Безопасное создание таблиц
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    
-    # 2. Наполняем базу начальными данными (сидинг)
-    async with engine.begin() as conn:
-        # Если seed_data асинхронный и принимает session/engine:
-        try:
-            await seed_data()
-        except Exception as e:
-            print(f"Ошибка или база уже заполнена: {e}")
-
     yield
 
 app = FastAPI(title="FastConfig API", lifespan=lifespan)
 
-# CORS Middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
