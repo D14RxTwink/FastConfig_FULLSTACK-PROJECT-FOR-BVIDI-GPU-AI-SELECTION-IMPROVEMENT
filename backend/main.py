@@ -15,59 +15,62 @@ from .ai import get_gpu_analysis_from_ai
 
 
 async def auto_seed_db():
-    async with AsyncSessionLocal() as session:
-        # Проверяем, есть ли уже данные в базе
-        result = await session.execute(select(models.Gpu))
-        existing_gpus = result.scalars().all()
-        
-        if not existing_gpus:
-            # 1. Создаем базовые архитектуры
-            ada = models.GpuArchitecture(architecture="Ada Lovelace", generation_series="RTX 4000")
-            ampere = models.GpuArchitecture(architecture="Ampere", generation_series="RTX 3000")
-            session.add_all([ada, ampere])
-            await session.commit()
+    try:
+        async with AsyncSessionLocal() as session:
+            # Проверяем, есть ли уже данные в базе
+            result = await session.execute(select(models.Gpu))
+            existing_gpus = result.scalars().all()
+            
+            if not existing_gpus:
+                # 1. Добавляем архитектуры
+                ada = models.GpuArchitecture(architecture="Ada Lovelace", generation_series="RTX 4000")
+                ampere = models.GpuArchitecture(architecture="Ampere", generation_series="RTX 3000")
+                session.add_all([ada, ampere])
+                await session.flush()  # Фиксируем генерацию ID
 
-            # 2. Добавляем видеокарты
-            gpus = [
-                models.Gpu(
-                    full_name="NVIDIA GeForce RTX 4060",
-                    vram_gb=8,
-                    memory_type="GDDR6",
-                    bus_width_bits=128,
-                    budget_tier="mid",
-                    for_games=True,
-                    for_3d=True,
-                    for_ml=False,
-                    for_office=False,
-                    arch_id=ada.id
-                ),
-                models.Gpu(
-                    full_name="NVIDIA GeForce RTX 3060",
-                    vram_gb=12,
-                    memory_type="GDDR6",
-                    bus_width_bits=192,
-                    budget_tier="budget",
-                    for_games=True,
-                    for_3d=True,
-                    for_ml=True,
-                    for_office=False,
-                    arch_id=ampere.id
-                ),
-                models.Gpu(
-                    full_name="NVIDIA GeForce RTX 4090",
-                    vram_gb=24,
-                    memory_type="GDDR6X",
-                    bus_width_bits=384,
-                    budget_tier="flagship",
-                    for_games=True,
-                    for_3d=True,
-                    for_ml=True,
-                    for_office=False,
-                    arch_id=ada.id
-                )
-            ]
-            session.add_all(gpus)
-            await session.commit()
+                # 2. Добавляем видеокарты с полученными ID
+                gpus = [
+                    models.Gpu(
+                        full_name="NVIDIA GeForce RTX 4060",
+                        vram_gb=8,
+                        memory_type="GDDR6",
+                        bus_width_bits=128,
+                        budget_tier="mid",
+                        for_games=True,
+                        for_3d=True,
+                        for_ml=False,
+                        for_office=False,
+                        arch_id=ada.id
+                    ),
+                    models.Gpu(
+                        full_name="NVIDIA GeForce RTX 3060",
+                        vram_gb=12,
+                        memory_type="GDDR6",
+                        bus_width_bits=192,
+                        budget_tier="budget",
+                        for_games=True,
+                        for_3d=True,
+                        for_ml=True,
+                        for_office=False,
+                        arch_id=ampere.id
+                    ),
+                    models.Gpu(
+                        full_name="NVIDIA GeForce RTX 4090",
+                        vram_gb=24,
+                        memory_type="GDDR6X",
+                        bus_width_bits=384,
+                        budget_tier="flagship",
+                        for_games=True,
+                        for_3d=True,
+                        for_ml=True,
+                        for_office=False,
+                        arch_id=ada.id
+                    )
+                ]
+                session.add_all(gpus)
+                await session.commit()
+    except Exception as e:
+        print(f"Ошибка при сидинге базы: {e}")
 
 
 @asynccontextmanager
