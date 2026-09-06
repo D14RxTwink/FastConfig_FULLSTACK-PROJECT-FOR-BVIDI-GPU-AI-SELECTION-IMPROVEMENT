@@ -14,11 +14,22 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 import os
+from backend.database import engine, Base, seed_data
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    yield
+
+app = FastAPI(title="FastConfig API", lifespan=lifespan)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+
+    Base.metadata.create_all(bind=engine)
+    
     yield
 
 app = FastAPI(title="FastConfig API", lifespan=lifespan)
