@@ -9,16 +9,25 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 
-from .database import engine, Base, get_db
+from .database import engine, Base, get_db, seed_data
 from . import models, schemas
 from .ai import get_gpu_analysis_from_ai
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Асинхронно создаем таблицы при запуске сервера
+    # 1. Создаем таблицы в базе данных
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    
+    # 2. Наполняем базу начальными данными (сидинг)
+    async with engine.begin() as conn:
+        # Если seed_data асинхронный и принимает session/engine:
+        try:
+            await seed_data()
+        except Exception as e:
+            print(f"Ошибка или база уже заполнена: {e}")
+
     yield
 
 app = FastAPI(title="FastConfig API", lifespan=lifespan)
@@ -34,18 +43,15 @@ app.add_middleware(
 
 @app.get("/")
 async def read_index():
-    # Используем абсолютный путь к html относительно текущего файла
     base_dir = os.path.dirname(os.path.abspath(__file__))
     html_path = os.path.join(base_dir, "..", "verstka", "index.html")
-    
     if not os.path.exists(html_path):
-        # Если структура папок плоская
         html_path = os.path.join(base_dir, "verstka", "index.html")
         
     if os.path.exists(html_path):
         return FileResponse(html_path)
     
-    raise HTTPException(status_code=404, detail="Файл index.html не найден на сервере")
+    raise HTTPException(status_code=404, detail="Файл index.html не найден")
 
 @app.get("/gpus", response_model=List[schemas.GpuSchema])
 async def get_all_gpus(db: AsyncSession = Depends(get_db)):
