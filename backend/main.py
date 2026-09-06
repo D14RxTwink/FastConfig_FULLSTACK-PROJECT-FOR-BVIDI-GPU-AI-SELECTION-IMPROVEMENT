@@ -25,7 +25,7 @@ app = FastAPI(title="FastConfig API", lifespan=lifespan)
 
 @app.get("/")
 async def read_index():
-    return FileResponse("frontend/index.html")
+    return FileResponse("verstka/index.html")
 
 app.add_middleware(
     CORSMiddleware,
