@@ -1,62 +1,17 @@
-import os
-import json
-from openai import AsyncOpenAI
-
-DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
-
 async def get_gpu_analysis_from_ai(gpu_name: str, vram: int, bus: int, arch: str) -> dict:
-    # Безопасное приведение типов на случай None из БД
+    # Защита от пустых значений
     vram = int(vram) if vram is not None else 0
     bus = int(bus) if bus is not None else 0
     gpu_name = str(gpu_name) if gpu_name else "Видеокарта"
     arch = str(arch) if arch else "Н/Д"
 
-    # 1. Если API-ключ есть, пробуем запросить у DeepSeek
-    if DEEPSEEK_API_KEY:
-        try:
-            client = AsyncOpenAI(
-                api_key=DEEPSEEK_API_KEY, 
-                base_url="https://api.deepseek.com"
-            )
-            
-            prompt = f"""
-            Проанализируй видеокарту {gpu_name} ({vram}GB VRAM, шина {bus}-bit, архитектура {arch}).
-            Оцени в процентах (0-100%) её пригодность для 4 категорий:
-            1. Игры
-            2. 3D рендеринг / Моделирование
-            3. Machine Learning (ML) / AI
-            4. Офис / Базовые задачи
-
-            Верни ответ STRICTLY в формате JSON с ключами:
-            "verdict": "короткий текст с выводом (до 150 символов)",
-            "games_pct": число,
-            "render_3d_pct": число,
-            "ml_pct": число,
-            "office_pct": число
-            """
-
-            response = await client.chat.completions.create(
-                model="deepseek-chat",
-                messages=[{"role": "user", "content": prompt}],
-                response_format={"type": "json_object"}
-            )
-            
-            data = json.loads(response.choices[0].message.content)
-            return {
-                "verdict": str(data.get("verdict", "Анализ завершен успешно.")),
-                "games_score": int(data.get("games_pct", 50)),
-                "render_3d_score": int(data.get("render_3d_pct", 50)),
-                "ml_score": int(data.get("ml_pct", 50)),
-                "office_score": int(data.get("office_pct", 100))
-            }
-        except Exception as e:
-            print(f"Ошибка DeepSeek API: {e}. Переходим на авто-расчет.")
-
-    # 2. Локальный расчет процентов (Fallback)
+    # 1. Офис / Мультимедиа (Любая современная дискретная видеокарта — 100%)
     office_score = 100
-    
-    # Игры: зависит от VRAM
-    if vram >= 16:
+
+    # 2. Игры: зависит от объёма видеопамяти и шины
+    if vram >= 24:
+        games_score = 99
+    elif vram >= 16:
         games_score = 95
     elif vram >= 12:
         games_score = 85
@@ -67,9 +22,11 @@ async def get_gpu_analysis_from_ai(gpu_name: str, vram: int, bus: int, arch: str
     else:
         games_score = 30
 
-    # 3D Рендеринг: VRAM + шина
-    if vram >= 16 and bus >= 256:
-        render_score = 95
+    # 3. 3D Рендеринг / Моделирование: важна видеопамять + ширина шины
+    if vram >= 24 and bus >= 384:
+        render_score = 98
+    elif vram >= 16 and bus >= 256:
+        render_score = 92
     elif vram >= 12:
         render_score = 80
     elif vram >= 8:
@@ -77,8 +34,10 @@ async def get_gpu_analysis_from_ai(gpu_name: str, vram: int, bus: int, arch: str
     else:
         render_score = 35
 
-    # Machine Learning (ML): VRAM (PyTorch/CUDA)
-    if vram >= 24:
+    # 4. Machine Learning (ML) / AI: критичен объём VRAM для весов моделей
+    if vram >= 48:
+        ml_score = 100
+    elif vram >= 24:
         ml_score = 98
     elif vram >= 16:
         ml_score = 85
@@ -89,13 +48,15 @@ async def get_gpu_analysis_from_ai(gpu_name: str, vram: int, bus: int, arch: str
     else:
         ml_score = 15
 
-    verdict_text = f"Оценка {gpu_name}: {vram}GB VRAM подходит для "
-    if ml_score >= 70:
-        verdict_text += "тяжелых задач ML и 3D."
-    elif games_score >= 70:
-        verdict_text += "современных игр и работы."
+    # Формируем автоматический вердикт
+    if ml_score >= 85:
+        verdict_text = f"{gpu_name} ({vram}GB VRAM, {bus}-bit): флагманское решение для тяжелого ML, AI-обучения и 3D-рендеринга."
+    elif games_score >= 80:
+        verdict_text = f"{gpu_name} ({vram}GB VRAM): отличный баланс для 1400p/4K гейминга, работы в Blender и тяжелых рабочих задач."
+    elif games_score >= 60:
+        verdict_text = f"{gpu_name} ({vram}GB VRAM): оптимальный вариант для Full HD гейминга, монтажа видео и базового 3D."
     else:
-        verdict_text += "базовых мультимедийных и офисных задач."
+        verdict_text = f"{gpu_name} ({vram}GB VRAM): начальный уровень для офисной работы, мультимедиа и неприхотливых игр."
 
     return {
         "verdict": verdict_text,
