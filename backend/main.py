@@ -17,18 +17,26 @@ from .ai import get_gpu_analysis_from_ai
 async def auto_seed_db():
     try:
         async with AsyncSessionLocal() as session:
-            # Проверяем, есть ли уже данные в базе
+            # Проверяем наличие видеокарт
             result = await session.execute(select(models.Gpu))
             existing_gpus = result.scalars().all()
             
             if not existing_gpus:
-                # 1. Добавляем архитектуры
-                ada = models.GpuArchitecture(architecture="Ada Lovelace", generation_series="RTX 4000")
-                ampere = models.GpuArchitecture(architecture="Ampere", generation_series="RTX 3000")
+                # 1. Создаем архитектуры с обязательным family_name
+                ada = models.Architecture(
+                    family_name="NVIDIA", 
+                    architecture="Ada Lovelace", 
+                    generation_series="RTX 4000"
+                )
+                ampere = models.Architecture(
+                    family_name="NVIDIA", 
+                    architecture="Ampere", 
+                    generation_series="RTX 3000"
+                )
                 session.add_all([ada, ampere])
-                await session.flush()  # Фиксируем генерацию ID
+                await session.flush()  # Получаем автосгенерированные ID
 
-                # 2. Добавляем видеокарты с полученными ID
+                # 2. Добавляем видеокарты со ссылкой на architecture_id
                 gpus = [
                     models.Gpu(
                         full_name="NVIDIA GeForce RTX 4060",
@@ -40,7 +48,7 @@ async def auto_seed_db():
                         for_3d=True,
                         for_ml=False,
                         for_office=False,
-                        arch_id=ada.id
+                        architecture_id=ada.id
                     ),
                     models.Gpu(
                         full_name="NVIDIA GeForce RTX 3060",
@@ -52,7 +60,7 @@ async def auto_seed_db():
                         for_3d=True,
                         for_ml=True,
                         for_office=False,
-                        arch_id=ampere.id
+                        architecture_id=ampere.id
                     ),
                     models.Gpu(
                         full_name="NVIDIA GeForce RTX 4090",
@@ -64,22 +72,23 @@ async def auto_seed_db():
                         for_3d=True,
                         for_ml=True,
                         for_office=False,
-                        arch_id=ada.id
+                        architecture_id=ada.id
                     )
                 ]
                 session.add_all(gpus)
                 await session.commit()
+                print("База данных успешно заполнена видеокартами!")
     except Exception as e:
-        print(f"Ошибка при сидинге базы: {e}")
+        print(f"Ошибка при заполнении базы: {e}")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Создаем таблицы в БД
+    # Создаем таблицы
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     
-    # Автоматически заполняем начальными видеокартами
+    # Наполняем базу при старте
     await auto_seed_db()
     yield
 
