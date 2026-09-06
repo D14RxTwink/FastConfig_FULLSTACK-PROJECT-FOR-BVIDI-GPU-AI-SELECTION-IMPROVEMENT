@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FastConfig AI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #f0f4f8;
+            --bg-card: rgba(255, 255, 255, 0.9);
+            --border-color: #e2e8f0;
+            --text-primary: #1e293b;
+            --text-muted: #64748b;
+            --accent-blue: #2563eb;
+            --badge-bg: #e0f2fe;
+            --badge-text: #0369a1;
+            --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            --shadow-lg: 0 10px 25px -5px rgba(37, 99, 235, 0.12);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(56, 189, 248, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 85% 85%, rgba(37, 99, 235, 0.12) 0%, transparent 40%);
+            background-attachment: fixed;
+            padding-bottom: 60px;
+        }
+
+        header { padding: 40px 20px 10px; text-align: center; }
+
+        .brand-title {
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #38bdf8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+
+        .subtitle { color: var(--text-muted); font-size: 1.05rem; }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+
+        /* Filter Panel */
+        .filter-panel {
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: space-between;
+        }
+
+        .filter-group { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 220px; }
+        .filter-label { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
+
+        select {
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: white;
+            font-family: inherit;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            outline: none;
+            cursor: pointer;
+        }
+
+        .gpu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.25s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+            border-color: rgba(56, 189, 248, 0.5);
+        }
+
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+        .gpu-name { font-size: 1.15rem; font-weight: 600; line-height: 1.3; }
+
+        .badge {
+            background: var(--badge-bg);
+            color: var(--badge-text);
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-bottom: 8px;
+        }
+
+        .tier-tag {
+            display: inline-block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 2px 8px;
+            border-radius: 6px;
+        }
+        .tier-budget { background: #dcfce7; color: #166534; }
+        .tier-mid { background: #e0f2fe; color: #0369a1; }
+        .tier-flagship { background: #fef3c7; color: #92400e; }
+
+        .specs-list { margin-top: 12px; border-top: 1px solid var(--border-color); padding-top: 10px; }
+        .spec-item { display: flex; justify-content: space-between; font-size: 0.88rem; margin-bottom: 4px; }
+        .spec-label { color: var(--text-muted); }
+        .spec-value { font-weight: 500; }
+
+        /* AI Analysis Styles */
+        .ai-section {
+            margin-top: 14px;
+            border-top: 1px dashed var(--border-color);
+            padding-top: 10px;
+        }
+
+        .ai-btn {
+            width: 100%;
+            padding: 8px 12px;
+            background: linear-gradient(135deg, #2563eb, #38bdf8);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .ai-btn:hover { opacity: 0.9; }
+
+        .ai-content {
+            background: rgba(241, 245, 249, 0.8);
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 0.82rem;
+            margin-top: 8px;
+        }
+
+        .ai-reason { color: #334155; margin-bottom: 8px; line-height: 1.35; }
+
+        .scores-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+        .score-item { display: flex; align-items: center; justify-content: space-between; background: white; padding: 4px 8px; border-radius: 6px; border: 1px solid #e2e8f0; }
+
+        .loader { text-align: center; padding: 60px; color: var(--text-muted); font-size: 1.1rem; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1 class="brand-title">FastConfig</h1>
+        <p class="subtitle">Интеллектуальный подбор графических ускорителей под задачи</p>
+    </header>
+
+    <div class="container">
+        <!-- Панель фильтров -->
+        <div class="filter-panel">
+            <div class="filter-group">
+                <label class="filter-label" for="taskFilter">Направление использования</label>
+                <select id="taskFilter" onchange="applyFilters()">
+                    <option value="all">Все направления</option>
+                    <option value="games">Игры (Games)</option>
+                    <option value="3d">3D Моделирование (3D Rendering)</option>
+                    <option value="ml">Машинное обучение (Machine Learning)</option>
+                    <option value="office">Офис / Учеба (Office Work)</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label" for="budgetFilter">Категория бюджета</label>
+                <select id="budgetFilter" onchange="applyFilters()">
+                    <option value="all">Любой бюджет</option>
+                    <option value="budget">Бюджетный класс</option>
+                    <option value="mid">Средний класс</option>
+                    <option value="flagship">Флагманы / Топ</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="loader" class="loader">Загрузка данных из сервера...</div>
+        <div id="gpu-grid" class="gpu-grid"></div>
+    </div>
+
+    <script>
+        const API_URL = "http://127.0.0.1:8000/gpus";
+        let allGpus = [];
+
+        async function fetchGpus() {
+            try {
+                const response = await fetch(API_URL);
+                if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+                allGpus = await response.json();
+                document.getElementById('loader').style.display = 'none';
+                renderGpus(allGpus);
+            } catch (error) {
+                document.getElementById('loader').style.display = 'block';
+                document.getElementById('loader').textContent = 'Ошибка загрузки данных. Убедитесь, что FastAPI запущен.';
+            }
+        }
+
+        function applyFilters() {
+            const selectedTask = document.getElementById('taskFilter').value;
+            const selectedBudget = document.getElementById('budgetFilter').value;
+
+            const filtered = allGpus.filter(gpu => {
+                let matchTask = true;
+                if (selectedTask === 'games') matchTask = gpu.for_games;
+                if (selectedTask === '3d') matchTask = gpu.for_3d;
+                if (selectedTask === 'ml') matchTask = gpu.for_ml;
+                if (selectedTask === 'office') matchTask = gpu.for_office;
+
+                let matchBudget = true;
+                if (selectedBudget !== 'all') matchBudget = (gpu.budget_tier === selectedBudget);
+
+                return matchTask && matchBudget;
+            });
+
+            renderGpus(filtered);
+        }
+
+        async function analyzeGpu(gpuId) {
+            const box = document.getElementById(`ai-box-${gpuId}`);
+            box.innerHTML = '<div style="text-align:center; padding: 8px; color: var(--text-muted); font-size: 0.85rem;">✨ DeepSeek анализирует спеки...</div>';
+
+            try {
+                const res = await fetch(`http://127.0.0.1:8000/gpus/${gpuId}/analyze`);
+                if (!res.ok) throw new Error("Ошибка получения AI-анализа");
+                const data = await res.json();
+
+                box.innerHTML = `
+                    <div class="ai-content">
+                        <p class="ai-reason"><b>Вердикт AI:</b> ${data.reason}</p>
+                        <div class="scores-grid">
+                            <div class="score-item"><span>🎮 Игры:</span> <b>${data.scores.games}%</b></div>
+                            <div class="score-item"><span>🎨 3D:</span> <b>${data.scores["3d"]}%</b></div>
+                            <div class="score-item"><span>🧠 ML:</span> <b>${data.scores.ml}%</b></div>
+                            <div class="score-item"><span>💼 Офис:</span> <b>${data.scores.office}%</b></div>
+                        </div>
+                    </div>
+                `;
+            } catch (e) {
+                box.innerHTML = '<div style="color: #ef4444; font-size: 0.82rem; text-align: center; padding: 6px;">Не удалось загрузить ИИ-анализ</div>';
+            }
+        }
+
+        function renderGpus(gpus) {
+            const grid = document.getElementById('gpu-grid');
+            grid.innerHTML = '';
+
+            if (gpus.length === 0) {
+                grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted);">По выбранным фильтрам ничего не найдено.</p>';
+                return;
+            }
+
+            gpus.forEach(gpu => {
+                const archName = gpu.arch_info?.architecture || 'Н/Д';
+                const seriesName = gpu.arch_info?.generation_series || 'Н/Д';
+                
+                let tierClass = 'tier-mid';
+                let tierLabel = 'Средний сегмент';
+                if (gpu.budget_tier === 'budget') { tierClass = 'tier-budget'; tierLabel = 'Бюджетный'; }
+                if (gpu.budget_tier === 'flagship') { tierClass = 'tier-flagship'; tierLabel = 'Флагман'; }
+
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div>
+                        <div class="card-header">
+                            <div class="gpu-name">${gpu.full_name}</div>
+                        </div>
+                        <span class="badge">${archName} (${seriesName})</span>
+                        <div><span class="tier-tag ${tierClass}">${tierLabel}</span></div>
+                        
+                        <div class="specs-list">
+                            <div class="spec-item">
+                                <span class="spec-label">Объем памяти:</span>
+                                <span class="spec-value">${gpu.vram_gb} ГБ</span>
+                            </div>
+                            <div class="spec-item">
+                                <span class="spec-label">Тип памяти:</span>
+                                <span class="spec-value">${gpu.memory_type}</span>
+                            </div>
+                            <div class="spec-item">
+                                <span class="spec-label">Шина памяти:</span>
+                                <span class="spec-value">${gpu.bus_width_bits} бит</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="ai-section">
+                        <div id="ai-box-${gpu.id}">
+                            <button onclick="analyzeGpu(${gpu.id})" class="ai-btn">
+                                ✨ Раскрытие в задачах (AI)
+                            </button>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        fetchGpus();
+    </script>
+</body>
+</html>
