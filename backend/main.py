@@ -9,7 +9,7 @@ from sqlalchemy.orm import selectinload
 from .database import engine, Base, get_db
 from . import models, schemas
 from .ai import get_gpu_analysis_from_ai
-
+import uvicorn
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse

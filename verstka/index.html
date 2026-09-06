@@ -211,7 +211,8 @@
     </div>
 
     <script>
-        const API_URL = "http://127.0.0.1:8000/gpus";
+        // Использован относительный путь к API
+        const API_URL = "/gpus";
         let allGpus = [];
 
         async function fetchGpus() {
@@ -252,7 +253,8 @@
             box.innerHTML = '<div style="text-align:center; padding: 8px; color: var(--text-muted); font-size: 0.85rem;">✨ DeepSeek анализирует спеки...</div>';
 
             try {
-                const res = await fetch(`http://127.0.0.1:8000/gpus/${gpuId}/analyze`);
+                // Использован относительный путь к роуту анализа
+                const res = await fetch(`/gpus/${gpuId}/analyze`);
                 if (!res.ok) throw new Error("Ошибка получения AI-анализа");
                 const data = await res.json();
 
