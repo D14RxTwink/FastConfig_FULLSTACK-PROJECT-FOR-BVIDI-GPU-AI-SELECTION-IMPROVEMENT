@@ -1,43 +1,32 @@
-from contextlib import asynccontextmanager
+import os
 from typing import List
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 
-from .database import engine, Base, get_db
+from .database import engine, Base, get_db, seed_data
 from . import models, schemas
 from .ai import get_gpu_analysis_from_ai
-import uvicorn
-from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
-import os
-from backend.database import engine, Base, seed_data
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Асинхронно создаем таблицы при запуске сервера
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    yield
-
-app = FastAPI(title="FastConfig API", lifespan=lifespan)
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-
-    Base.metadata.create_all(bind=engine)
     
+    # Заполняем базу начальными данными, если нужно
+    # await seed_data()
     yield
 
 app = FastAPI(title="FastConfig API", lifespan=lifespan)
 
-@app.get("/")
-async def read_index():
-    return FileResponse("verstka/index.html")
-
+# CORS Middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -45,6 +34,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get("/")
+async def read_index():
+    return FileResponse("verstka/index.html")
 
 @app.get("/gpus", response_model=List[schemas.GpuSchema])
 async def get_all_gpus(db: AsyncSession = Depends(get_db)):
