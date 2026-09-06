@@ -5,6 +5,12 @@ from openai import AsyncOpenAI
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
 
 async def get_gpu_analysis_from_ai(gpu_name: str, vram: int, bus: int, arch: str) -> dict:
+    # Безопасное приведение типов на случай None из БД
+    vram = int(vram) if vram is not None else 0
+    bus = int(bus) if bus is not None else 0
+    gpu_name = str(gpu_name) if gpu_name else "Видеокарта"
+    arch = str(arch) if arch else "Н/Д"
+
     # 1. Если API-ключ есть, пробуем запросить у DeepSeek
     if DEEPSEEK_API_KEY:
         try:
@@ -37,7 +43,7 @@ async def get_gpu_analysis_from_ai(gpu_name: str, vram: int, bus: int, arch: str
             
             data = json.loads(response.choices[0].message.content)
             return {
-                "verdict": data.get("verdict", "Анализ завершен успешно."),
+                "verdict": str(data.get("verdict", "Анализ завершен успешно.")),
                 "games_score": int(data.get("games_pct", 50)),
                 "render_3d_score": int(data.get("render_3d_pct", 50)),
                 "ml_score": int(data.get("ml_pct", 50)),
@@ -46,7 +52,7 @@ async def get_gpu_analysis_from_ai(gpu_name: str, vram: int, bus: int, arch: str
         except Exception as e:
             print(f"Ошибка DeepSeek API: {e}. Переходим на авто-расчет.")
 
-    # 2. Локальный расчет процентов (Fallback, если нет ключа или ошибки сети)
+    # 2. Локальный расчет процентов (Fallback)
     office_score = 100
     
     # Игры: зависит от VRAM
@@ -71,7 +77,7 @@ async def get_gpu_analysis_from_ai(gpu_name: str, vram: int, bus: int, arch: str
     else:
         render_score = 35
 
-    # Machine Learning (ML): жесткий упор в VRAM (PyTorch/CUDA)
+    # Machine Learning (ML): VRAM (PyTorch/CUDA)
     if vram >= 24:
         ml_score = 98
     elif vram >= 16:
