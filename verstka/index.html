@@ -211,7 +211,6 @@
     </div>
 
     <script>
-        // Использован относительный путь к API
         const API_URL = "/gpus";
         let allGpus = [];
 
@@ -250,27 +249,26 @@
 
         async function analyzeGpu(gpuId) {
             const box = document.getElementById(`ai-box-${gpuId}`);
-            box.innerHTML = '<div style="text-align:center; padding: 8px; color: var(--text-muted); font-size: 0.85rem;">✨ DeepSeek анализирует спеки...</div>';
+            box.innerHTML = '<div style="text-align:center; padding: 8px; color: var(--text-muted); font-size: 0.85rem;">⚡ Вычисляем оценки...</div>';
 
             try {
-                // Использован относительный путь к роуту анализа
                 const res = await fetch(`/gpus/${gpuId}/analyze`);
-                if (!res.ok) throw new Error("Ошибка получения AI-анализа");
+                if (!res.ok) throw new Error("Ошибка получения анализа");
                 const data = await res.json();
 
                 box.innerHTML = `
                     <div class="ai-content">
-                        <p class="ai-reason"><b>Вердикт AI:</b> ${data.reason}</p>
+                        <p class="ai-reason"><b>Вердикт:</b> ${data.verdict}</p>
                         <div class="scores-grid">
-                            <div class="score-item"><span>🎮 Игры:</span> <b>${data.scores.games}%</b></div>
-                            <div class="score-item"><span>🎨 3D:</span> <b>${data.scores["3d"]}%</b></div>
-                            <div class="score-item"><span>🧠 ML:</span> <b>${data.scores.ml}%</b></div>
-                            <div class="score-item"><span>💼 Офис:</span> <b>${data.scores.office}%</b></div>
+                            <div class="score-item"><span>🎮 Игры:</span> <b>${data.games_score}%</b></div>
+                            <div class="score-item"><span>🎨 3D:</span> <b>${data.render_3d_score}%</b></div>
+                            <div class="score-item"><span>🧠 ML:</span> <b>${data.ml_score}%</b></div>
+                            <div class="score-item"><span>💼 Офис:</span> <b>${data.office_score}%</b></div>
                         </div>
                     </div>
                 `;
             } catch (e) {
-                box.innerHTML = '<div style="color: #ef4444; font-size: 0.82rem; text-align: center; padding: 6px;">Не удалось загрузить ИИ-анализ</div>';
+                box.innerHTML = '<div style="color: #ef4444; font-size: 0.82rem; text-align: center; padding: 6px;">Не удалось загрузить анализ</div>';
             }
         }
 
